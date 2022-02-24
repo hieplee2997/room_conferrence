@@ -92,7 +92,6 @@ class PanchatWebRTC {
   Map<String, TrackContext> localTrackIdToTrack = new Map();
   Map<String, String> midToTrackId = new Map();
   Map<String, TrackContext> trackIdToTrack = new Map();
-  var offerConfig = <String, dynamic>{};
 
   RTCPeerConnection? connection;
   Callbacks callbacks;
@@ -133,7 +132,7 @@ class PanchatWebRTC {
         this.onOfferData(offerData);
         break;
       case "sdpAnswer":
-        print(event.data);
+        // print(event.data);
         this.midToTrackId = new Map.from(event.data["midToTrackId"]);
         this.onAnswer(event.data);
         break;
@@ -148,7 +147,7 @@ class PanchatWebRTC {
         if (peer.id == this.getPeerId()) return;
         this.addPeer(peer);
         this.callbacks.onPeerJoined?.call(peer);
-        print("New peer joined ${peer.metadata["displayName"]}");
+        // print("New peer joined ${peer.metadata["displayName"]}");
         break;
       case "peerLeft":
         print("Me: ${this.getPeerId()}, left: ${this.idToPeer[event.data["peerId"]]?.id}");
@@ -187,7 +186,7 @@ class PanchatWebRTC {
             this.callbacks.onTrackAdded?.call(ctx);
           }
         });
-        print("Track Added");
+        // print("Track Added");
         break;
       case "trackUpdated":
         if (this.getPeerId() == event.data["peerId"]) return;
@@ -287,11 +286,7 @@ class PanchatWebRTC {
       //   print(element.transceiverId);
       // });
     } else {
-      this.offerConfig = {
-        "optional": [
-          {"IceRestart": true}
-        ]
-      };
+      this.connection!.restartIce();
     }
 
     await this.createAndSendOffer(offerData);
@@ -301,7 +296,8 @@ class PanchatWebRTC {
     if (this.connection == null) return;
     try {
       RTCSessionDescription description =
-          await this.connection!.createOffer(offerConfig);
+          await this.connection!.createOffer({});
+      // print("beforre: ${description.toMap()}\n\n");
       await this
           .connection!
           .setLocalDescription(description)
@@ -316,7 +312,7 @@ class PanchatWebRTC {
       });
   
       await this.addTransceiversIfNeeded(offerData);
-      description = await this.connection!.createOffer(offerConfig);
+      description = await this.connection!.createOffer({});
       // description.sdp = description.sdp!.replaceAll('setup:actpass','setup:active');
       await this.connection!.setLocalDescription(description);
 
@@ -325,7 +321,7 @@ class PanchatWebRTC {
         "trackIdToTrackMetadata": getTrackIdToMetadata(),
         "midToTrackId": await this.getMidToTrackId()
       });
-      print(description.toMap());
+      // print(description.toMap());
 
       this.sendMediaEvent(generateCustomEvent(mediaEvent));
     } catch (e, stack) {
@@ -433,14 +429,13 @@ class PanchatWebRTC {
     final tranceivers = (await this.connection!.getTransceivers());
     List recvTranceivers = [];
     await Future.forEach<RTCRtpTransceiver>(tranceivers, (tranceiver) async {
-      print("direction: ${(await tranceiver.getDirection())} currentDiretion: ${(await tranceiver.getCurrentDirection())}");
-      if ((await tranceiver.getCurrentDirection()) == TransceiverDirection.RecvOnly){
-        print("1111111111111");
-        recvTranceivers += [tranceiver];
+      // print("direction: ${(await tranceiver.getDirection())} currentDiretion: ${(await tranceiver.getCurrentDirection())}");
+      if ((await tranceiver.getDirection()) == TransceiverDirection.RecvOnly){
+        // print("111111111");
+        recvTranceivers.add(tranceiver);
       }
     });
-    print("Add tranceiver done ${recvTranceivers.toList().toString()}");
-    print(recvTranceivers.length);
+
     List<RTCRtpMediaType> toAdd = [];
     
     List<RTCRtpMediaType> getNeededTransceiversTypes(type) {

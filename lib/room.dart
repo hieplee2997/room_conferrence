@@ -23,8 +23,8 @@ const RTC_CONFIGURATION = {
 
 const OFFER_SDP_CONSTRAINTS = {
   "mandatory": {
-    // "fferToReceiveAudio": true,
-    // "fferToReceiveVideo": true,
+    "OfferToReceiveAudio": true,
+    "OfferToReceiveVideo": true,
   },
   "optional": [],
 };
@@ -78,6 +78,10 @@ class Room {
     );
   }
 
+  void setDisplayname(String name) {
+    this.displayName = name;
+  }
+
   Future<void> connect() async {
     await this.socket.connect();
     this.webRTCChannel = this.socket.channel('room:hiepleess');
@@ -100,7 +104,7 @@ class Room {
       this.onAttackStream?.call("LOCAL_PEER_ID", this.localStream);
 
       this.webRTCChannel.join()?.receive("ok", (response) async => {
-        this.webRTC.join({"displayName": "Pancake Chat"})
+        this.webRTC.join({"displayName": this.displayName})
       });
       this.webRTCChannel.on("mediaEvent", (payload, ref, joinRef) {
         this.webRTC.receiveMediaEvent(payload!["data"]);
@@ -111,13 +115,15 @@ class Room {
   }
   void leave() {
     this.webRTC.leave();
+    this.localStream?.dispose();
     this.webRTCChannel.leave();
     this.socket.disconnect();
   }
 }
 
 class RoomUI extends StatefulWidget {
-  const RoomUI({Key? key}) : super(key: key);
+  final String displayName;
+  const RoomUI({Key? key, required this.displayName}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -133,6 +139,7 @@ class _RoomUIState extends State<RoomUI> {
   void initState() {
     super.initState();
     room = new Room();
+    room!.setDisplayname(widget.displayName);
     room!.onAddVideoElement = (id, metadata, localPeer) async {
       RTCVideoRenderer newPeerRender = new RTCVideoRenderer();
       await newPeerRender.initialize();
@@ -191,21 +198,21 @@ class _RoomUIState extends State<RoomUI> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                InkWell(
-                  onTap: () {
-                    // collapse = !collapse;
-                    // widget.screenStateCallback(collapse);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xff5E5E5E),
-                      borderRadius: BorderRadius.circular(19)
-                    ),
-                    width: 38,
-                    height: 38,
-                    child: const Icon(PhosphorIcons.arrowLeft, size: 20, color: Color(0xffEDEDED)),
-                  ),
-                ),
+                // InkWell(
+                //   onTap: () {
+                //     // collapse = !collapse;
+                //     // widget.screenStateCallback(collapse);
+                //   },
+                //   child: Container(
+                //     decoration: BoxDecoration(
+                //       color: const Color(0xff5E5E5E),
+                //       borderRadius: BorderRadius.circular(19)
+                //     ),
+                //     width: 38,
+                //     height: 38,
+                //     child: const Icon(PhosphorIcons.arrowLeft, size: 20, color: Color(0xffEDEDED)),
+                //   ),
+                // ),
                 Column(
                   children: const [
                     Padding(
@@ -214,19 +221,19 @@ class _RoomUIState extends State<RoomUI> {
                     ),
                   ],
                 ),
-                InkWell(
-                  onTap: () {
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xff5E5E5E) ,
-                      borderRadius: BorderRadius.circular(19)
-                    ),
-                    width: 38,
-                    height: 38,
-                    // child: SvgPicture.asset('assets/icons/settings.svg')
-                  ),
-                ),
+                // InkWell(
+                //   onTap: () {
+                //   },
+                //   child: Container(
+                //     decoration: BoxDecoration(
+                //       color: const Color(0xff5E5E5E) ,
+                //       borderRadius: BorderRadius.circular(19)
+                //     ),
+                //     width: 38,
+                //     height: 38,
+                //     // child: SvgPicture.asset('assets/icons/settings.svg')
+                //   ),
+                // ),
               ],
             ),
             const SizedBox(height: 20),
@@ -253,7 +260,7 @@ class _RoomUIState extends State<RoomUI> {
                               Positioned(
                                 right: 30.0,
                                 bottom: 10.0,
-                                child: Text(peer["metadata"])
+                                child: Text(peer["metadata"], style: const TextStyle(color: Colors.white),)
                               )
                             ],
                           ),

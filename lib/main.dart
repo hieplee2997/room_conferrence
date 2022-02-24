@@ -29,12 +29,21 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-  
+  TextEditingController editingController = TextEditingController();
+  String status = "";
 
-  void _incrementCounter() {
+  void joinRoom() {
+    if (editingController.text.trim() == "") {
+      setState(() {
+        status = "Bạn chưa nhập tên";
+      });
+      return;
+    }
+    setState(() {
+      status = "";
+    });
     Navigator.push(context, PageRouteBuilder(pageBuilder: (context, a1, a2) {
-      return const RoomUI();
+      return RoomUI(displayName: editingController.text);
     }));
   }
 
@@ -50,10 +59,24 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: TextButton(
-          style: ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.black)),
-          onPressed: () => _incrementCounter(),
-          child: const Text("Join room"),
+        child: SizedBox(
+          width: 300,
+          height: 300,
+          child: Column(
+            children: [
+              TextField(
+                style: const TextStyle(color: Colors.black),
+                decoration: const InputDecoration(border: OutlineInputBorder(borderSide: BorderSide(color: Colors.blue)), hintText: "Enter your name"),
+                controller: editingController
+              ),
+              TextButton(
+                style: ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.black)),
+                onPressed: () => joinRoom(),
+                child: const Text("Join room"),
+              ),
+              Text(status)
+            ],
+          ),
         )
       ),
     );
